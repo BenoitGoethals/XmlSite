@@ -1,7 +1,12 @@
 import csv
 import requests
 import feedparser as FP
-
+from flask import render_template
+import flask
+import random
+from datetime import datetime
+import webbrowser
+import os
 def readCSV():
     data = set()
     with open('rsslinks.csv', newline='') as csvfile:
@@ -19,9 +24,8 @@ def parseXML(xml):
 
     # create empty list for news items
     newsitems    = []
-
     for entry in el.entries:
-        news=News(entry.id,entry.published,entry.summary)
+        news=News(entry.id,entry.published,entry.summary,entry.title)
         newsitems.append(news)
         # return news items list
     return newsitems
@@ -36,15 +40,32 @@ def getDataFromURL(url):
 
 
 
-def makeHtml():
-    pass
+def makeHtml(channel,newsBulk):
+
+
+    app = flask.Flask('my app')
+    file=channel+str(datetime.now()).replace(" ","").replace(".","").replace(":","")+".html"
+    with app.app_context():
+        rendered = render_template('index.html', \
+                                   title="News "+channel+" "+str(datetime.today()), \
+                                   news=newsBulk)
+        print(rendered)
+
+        f = open(file, 'wb')
+
+
+
+        f.write(str.encode(rendered))
+        f.close()
+        webbrowser.open_new_tab(file)
 
 class News():
 
-    def __init__(self,id,published,summary):
+    def __init__(self,id,published,summary,title):
         self.id=str.strip(id)
         self.published=str.strip(published)
         self.summary=str.strip(summary)
+        self.title=title
 
     def __str__(self):
         # Override to print a readable string presentation of your object
@@ -77,20 +98,20 @@ class LinkSite:
 
 
 def main():
+    import glob
+
+    mylist = [f for f in glob.glob("*.html")]
+    for f in mylist:
+        os.remove(f)
+
     data=readCSV()
     if data is not None:
         for url in data:
             result= getDataFromURL((url.url))
             if result is not None:
-                print(result)
+              #  print(result)
                 news=parseXML(result)
-                for n in news:
-                    print(n)
-
-
-
-
-
+                makeHtml(url.channel, news)
 
 
 if __name__ == "__main__":

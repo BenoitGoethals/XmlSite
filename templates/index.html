@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+  <head>
+<title>{{ title }}</title>
+  </head>
+  <body>
+<h1>{{ title }}</h1>
+  <ul>
+  {% for n in news %}
+      <li><h2>{{ n.title }}</h2></li>
+
+      {{ n.summary }}
+
+ <BR>
+  {% endfor %}
+ </ul>
+  </body>
+</html>
+
+
