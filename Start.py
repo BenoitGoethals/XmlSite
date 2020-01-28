@@ -4,7 +4,9 @@ import feedparser as FP
 from flask import render_template
 import flask
 import random
+from datetime import date
 from datetime import datetime
+from datetime import time
 import webbrowser
 import os
 def readCSV():
@@ -39,17 +41,19 @@ def getDataFromURL(url):
 
 
 
-
 def makeHtml(channel,newsBulk):
-
+    import os
+    folder = str(date.today())
+    if not os.path.exists(folder):
+        os.makedirs(folder)
 
     app = flask.Flask('my app')
-    file=channel+str(datetime.now()).replace(" ","").replace(".","").replace(":","")+".html"
+    file=".\\" + folder + "\\" +channel+str(datetime.now()).replace(" ","").replace(".","").replace(":","")+".html"
     with app.app_context():
         rendered = render_template('index.html', \
-                                   title="News "+channel+" "+str(datetime.today()), \
+                                   title="News "+channel+" "+str(date.today()), \
                                    news=newsBulk)
-        print(rendered)
+
 
         f = open(file, 'wb')
 
