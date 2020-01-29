@@ -1,5 +1,7 @@
 import os
 import sys
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.blocking import BlockingScheduler
 
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.exc import IntegrityError
@@ -19,6 +21,7 @@ import webbrowser
 import os
 
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.pool import SingletonThreadPool
 
 
 def readCSV():
@@ -139,9 +142,16 @@ def get_or_create(session, model, defaults=None, **kwargs):
 		except IntegrityError:
 			return session.query(model).filter_by(**kwargs).one(), False
 def main():
+    scheduler = BlockingScheduler()
+    scheduler.add_job(job, 'interval',seconds=5)
+    scheduler.start()
+
+    a=input("return to stop")
+
+def job():
     print("hello")
 
-    engine = create_engine('sqlite:///store.db')
+    engine = create_engine('sqlite:///store.db', poolclass=SingletonThreadPool)
     # Create all tables in the engine. This is equivalent to "Create Table"
     # statements in raw SQL.
     Base.metadata.create_all(engine)
@@ -173,26 +183,32 @@ def main():
               #  print(result)
           news = parseXML(result)
           for newsLine in news:
-             newsLine.linkSite = url
-             s.add(newsLine)
+              try:
+                  s.query(News).filter_by(title=newsLine.title).one()
+
+              except NoResultFound:
+                newsLine.linkSite = url
+                s.add(newsLine)
             #   makeHtml(url.channel, news)
 
     s.commit()
 
-    i=0
-    for instance in s.query(News).order_by(News.id):
-        i=i+1
-        print(i)
-        print(instance.id)
-        print(instance.title)
-        print( instance.summary)
-        print(instance.linkSite.channel)
+    print(s.query(News).order_by(News.id).count())
+   # i=0
+   # for instance in s.query(News).order_by(News.id):
+    #    i=i+1
+     #   print(i)
+      #  print(instance.id)
+       # print(instance.title)
+    #    print( instance.summary)
+     #   print(instance.linkSite.channel)
 
+    print(s.query(LinkSite).count())
+  #  for instance2 in s.query(LinkSite):
+   #     print(instance2.id)
+    #    print(instance2.channel)
+     #   print(instance2.url)
 
-    for instance2 in s.query(LinkSite):
-        print(instance2.id)
-        print(instance2.channel)
-        print(instance2.url)
 
 if __name__ == "__main__":
     main()
