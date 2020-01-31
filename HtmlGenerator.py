@@ -32,6 +32,7 @@ import logging
 
 from Entitys import Base, LinkSite, News
 
+
 def make_Html(newsBulk):
     import os
     folder = str(date.today())
@@ -39,25 +40,21 @@ def make_Html(newsBulk):
         os.makedirs(folder)
 
     app = flask.Flask('my app')
-    file=".\\" + folder + "\\index.html"
+    file= os.path.join(".",folder, 'index.html')
+   # file = "./" + folder + "/index.html"
     with app.app_context():
         rendered = render_template('index.html', \
-                                   title="News "+" "+datetime.now().strftime("%m/%d/%Y, %H:%M:%S"), \
+                                   title="News " + " " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"), \
                                    news=newsBulk)
-
 
         f = open(file, 'wb')
 
-
-
         f.write(str.encode(rendered))
         f.close()
-        #webbrowser.open_new_tab(file)
+        # webbrowser.open_new_tab(file)
 
 
 def get_Data():
-
-
     engine = create_engine('sqlite:///store.db', poolclass=SingletonThreadPool)
 
     Base.metadata.create_all(engine)
@@ -67,34 +64,36 @@ def get_Data():
     connection = engine.connect()
     s = session()
 
-    today=datetime.now().strftime("%Y-%m-%d")
+    today = datetime.now().strftime("%Y-%m-%d")
     try:
 
-        data= s.query(News).filter(News.published.like(today+"%")).all()
-     #   data = s.query(News).filter(published = today).all()
+        data = s.query(News).filter(News.published.like(today + "%")).all()
+        #   data = s.query(News).filter(published = today).all()
 
         if len(data) == 0:
-          return None
+            return None
 
         return [
             {'id': n.id, 'summary': n.summary, 'title': n.title, 'url': n.linkSite.channel} for n in
             data]
     except NoResultFound:
         return None
+
+
 def job():
-  data=get_Data()
-  if data != None:
-      make_Html(data)
+    data = get_Data()
+    if data != None:
+        make_Html(data)
+
 
 def main():
-    logging.basicConfig(filename='htmlgenerator.log',level=logging.INFO)
+    logging.basicConfig(filename='htmlgenerator.log', level=logging.INFO)
     logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
     scheduler = BlockingScheduler()
     scheduler.add_job(job, 'interval', minutes=1)
     scheduler.start()
 
     a = input("return to stop")
-
 
 
 if __name__ == "__main__":
