@@ -92,7 +92,7 @@ def main():
     logging.basicConfig()
     logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
     scheduler = BlockingScheduler()
-    scheduler.add_job(job, 'interval', seconds=5)
+    scheduler.add_job(job, 'interval', seconds=10)
     scheduler.start()
 
     a = input("return to stop")

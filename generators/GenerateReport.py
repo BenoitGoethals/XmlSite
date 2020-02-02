@@ -13,7 +13,7 @@ from datetime import date
 from datetime import datetime
 import webbrowser
 import os
-
+from googletrans import Translator
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.pool import SingletonThreadPool
 import logging
@@ -42,6 +42,32 @@ from flask_httpauth import HTTPBasicAuth
 auth = HTTPBasicAuth()
 
 
+@app.route('/news/keyword/<string:keyword>', methods=['GET'])
+def get_Keyword(keyword):
+    print("hello")
+
+    engine = create_engine('sqlite:///store.db', poolclass=SingletonThreadPool)
+    # Create all tables in the engine. This is equivalent to "Create Table"
+    # statements in raw SQL.
+    Base.metadata.create_all(engine)
+    from sqlalchemy.orm import sessionmaker
+    session = sessionmaker()
+    session.configure(bind=engine)
+    connection = engine.connect()
+    s = session()
+
+    try:
+
+       # data = s.query(News).join(LinkSite).filter(LinkSite.channel == news).all()
+        data = s.query(News).filter(News.summary.like('%'+keyword+'%')).all()
+        if len(data) == 0:
+            abort(404)
+
+        return jsonify([
+            {'id': book.id, 'Summary': book.summary, 'title': book.title, 'url': book.linkSite.channel } for book in data     ])
+    except NoResultFound:
+        return None
+
 @app.route('/news/<string:news>', methods=['GET'])
 def get_news(news):
     print("hello")
@@ -64,7 +90,7 @@ def get_news(news):
             abort(404)
 
         return jsonify([
-            {'id': book.id, 'Summary': book.summary, 'title': book.title, 'url': book.linkSite.channel } for book in data     ])
+            {'id': book.id, 'Summary': book.summary, 'title': book.title, 'url': book.linkSite.channel} for book in data     ])
     except NoResultFound:
         return None
 
@@ -101,4 +127,4 @@ def get_tasks():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='192.168.1.149',debug=True,port=5005)

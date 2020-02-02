@@ -13,11 +13,12 @@ import os
 from flask import Flask, jsonify
 from flask import abort
 from flask import make_response
+import json
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import create_engine
 import csv
-import requests
+
 import feedparser as FP
 from flask import render_template
 import flask
@@ -25,7 +26,7 @@ from datetime import date
 from datetime import datetime
 import webbrowser
 import os
-
+import platform
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.pool import SingletonThreadPool
 import logging
@@ -33,19 +34,49 @@ import logging
 from Entitys import Base, LinkSite, News
 
 
+
+def __getWheather(city,link):
+    headers = {'Content-Type': 'application/json'}
+
+
+    response = requests.get(link, headers=headers)
+    if response.status_code == 200:
+        return json.loads(response.content.decode('utf-8'))
+    else:
+        return None
+
+def get_weather(city):
+    api_url_base = 'https://api.openweathermap.org/data/2.5/weather?q=' + city + "&units=metric&lang=nl&APPID=8434e7589baa7da22d0220b2669daef0"
+    return __getWheather(city,api_url_base)
+
+
+def get_weatherForCast(city):
+    api_url_base = 'https://api.openweathermap.org/data/2.5/weather?q=' + city + "&units=metric&lang=nl&APPID=8434e7589baa7da22d0220b2669daef0"
+    print(api_url_base)
+    return __getWheather(city, api_url_base)
+
+
+
+
 def make_Html(newsBulk):
     import os
+    print("generate")
     folder = str(date.today())
     if not os.path.exists(folder):
         os.makedirs(folder)
 
     app = flask.Flask('my app')
-    file= os.path.join(".",folder, 'index.html')
-   # file = "./" + folder + "/index.html"
+
+    responseWeather = get_weather("dendermonde")
+    if platform.system() == 'Windows':
+        file = os.path.join(".", folder, 'index.html')
+    else:
+        file = '/var/www/html/index.html'
+    # file = "./" + folder + "/index.html"
     with app.app_context():
         rendered = render_template('index.html', \
                                    title="News " + " " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"), \
-                                   news=newsBulk)
+                                   news=newsBulk,weather=responseWeather['weather'][0]['description'],temperatuur=responseWeather['main']['temp'])
 
         f = open(file, 'wb')
 
@@ -56,7 +87,7 @@ def make_Html(newsBulk):
 
 def get_Data():
     engine = create_engine('sqlite:///store.db', poolclass=SingletonThreadPool)
-
+    print("job running")
     Base.metadata.create_all(engine)
     from sqlalchemy.orm import sessionmaker
     session = sessionmaker()
@@ -71,12 +102,17 @@ def get_Data():
         #   data = s.query(News).filter(published = today).all()
 
         if len(data) == 0:
+            session.close_all
+            connection.close()
             return None
-
+        session.close_all
+        connection.close()
         return [
             {'id': n.id, 'summary': n.summary, 'title': n.title, 'url': n.linkSite.channel} for n in
             data]
     except NoResultFound:
+        session.close_all
+        connection.close()
         return None
 
 
@@ -87,10 +123,11 @@ def job():
 
 
 def main():
+    print("start")
     logging.basicConfig(filename='htmlgenerator.log', level=logging.INFO)
     logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
     scheduler = BlockingScheduler()
-    scheduler.add_job(job, 'interval', minutes=1)
+    scheduler.add_job(job, 'interval', seconds=30)
     scheduler.start()
 
     a = input("return to stop")
