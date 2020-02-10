@@ -34,10 +34,8 @@ import logging
 from Entitys import Base, LinkSite, News
 
 
-
-def __getWheather(city,link):
+def __getWheather(city, link):
     headers = {'Content-Type': 'application/json'}
-
 
     response = requests.get(link, headers=headers)
     if response.status_code == 200:
@@ -45,9 +43,10 @@ def __getWheather(city,link):
     else:
         return None
 
+
 def get_weather(city):
     api_url_base = 'https://api.openweathermap.org/data/2.5/weather?q=' + city + "&units=metric&lang=nl&APPID=8434e7589baa7da22d0220b2669daef0"
-    return __getWheather(city,api_url_base)
+    return __getWheather(city, api_url_base)
 
 
 def get_weatherForCast(city):
@@ -56,33 +55,33 @@ def get_weatherForCast(city):
     return __getWheather(city, api_url_base)
 
 
-
-
 def make_Html(newsBulk):
     import os
     print("generate")
     folder = str(date.today())
-    if not os.path.exists(folder):
-        os.makedirs(folder)
+    if not os.path.exists(os.path.join("..", folder,)):
+        os.makedirs(os.path.join("..", folder,))
 
     app = flask.Flask('my app')
 
     responseWeather = get_weather("dendermonde")
     if platform.system() == 'Windows':
-        file = os.path.join(".", folder, 'index.html')
+        file = os.path.join("..", folder, 'index.html')
     else:
         file = '/var/www/html/index.html'
     # file = "./" + folder + "/index.html"
     with app.app_context():
-        rendered = render_template('..\templates\index.html', \
+        rendered = render_template(os.path.join('index.html'), \
                                    title="News " + " " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"), \
-                                   news=newsBulk,weather=responseWeather['weather'][0]['description'],temperatuur=responseWeather['main']['temp'])
+                                   news=newsBulk, weather=responseWeather['weather'][0]['description'],
+                                   temperatuur=responseWeather['main']['temp'])
 
+        os.remove(file)
         f = open(file, 'wb')
 
         f.write(str.encode(rendered))
         f.close()
-        # webbrowser.open_new_tab(file)
+        webbrowser.open_new_tab(file)
 
 
 def get_Data():
@@ -127,7 +126,7 @@ def main():
     logging.basicConfig(filename='htmlgenerator.log', level=logging.INFO)
     logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
     scheduler = BlockingScheduler()
-    scheduler.add_job(job, 'interval', seconds=30)
+    scheduler.add_job(job, 'interval', seconds=5)
     scheduler.start()
 
     a = input("return to stop")
