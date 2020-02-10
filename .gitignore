@@ -189,3 +189,9 @@ venv/Lib/site-packages/urllib3/packages/ssl_match_hostname/__pycache__/
 venv/Lib/site-packages/urllib3/util/__pycache__/
 venv/Lib/site-packages/werkzeug/
 venv/Scripts/flask.exe
+.idea/dataSources.local.xml
+.idea/dataSources/
+2020-01-31/
+generators/2020-02-10/
+generators/store.db
+store.db

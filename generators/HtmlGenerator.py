@@ -74,7 +74,7 @@ def make_Html(newsBulk):
         file = '/var/www/html/index.html'
     # file = "./" + folder + "/index.html"
     with app.app_context():
-        rendered = render_template('index.html', \
+        rendered = render_template('..\templates\index.html', \
                                    title="News " + " " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"), \
                                    news=newsBulk,weather=responseWeather['weather'][0]['description'],temperatuur=responseWeather['main']['temp'])
 

@@ -21,7 +21,7 @@ from Entitys import Base, LinkSite, News
 
 def readCSV():
     data = set()
-    with open('rsslinks.csv', newline='') as csvfile:
+    with open('../resources/rsslinks.csv', newline='') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         for row in spamreader:
             data.add(LinkSite(row[0], row[1], row[2]))
